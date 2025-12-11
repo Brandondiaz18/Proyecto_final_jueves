@@ -1,10 +1,10 @@
 services:
   - type: web
     name: backend
-    rootDir: backend
-    plan: free
     env: docker
+    rootDir: backend
     dockerfilePath: backend/Dockerfile
+    plan: free
     autoDeploy: true
     envVars:
       - key: DATABASE_URL
