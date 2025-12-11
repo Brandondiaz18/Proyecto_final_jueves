@@ -3,9 +3,9 @@ services:
     name: backend
     env: docker
     rootDir: backend
-    dockerfilePath: backend/Dockerfile
+    buildCommand: docker build -t backend .
+    startCommand: docker run -p $PORT:8000 backend
     plan: free
-    autoDeploy: true
     envVars:
       - key: DATABASE_URL
         sync: false
