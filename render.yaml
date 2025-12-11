@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: backend
+    rootDir: backend
+    plan: free
+    env: docker
+    dockerfilePath: backend/Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
