@@ -4,7 +4,18 @@ from app.models import TodoIn, TodoUpdate
 from datetime import datetime
 from bson import ObjectId
 
-router = APIRouter()  # NO AGREGAR prefijos aquí
+router = APIRouter()
+
+
+# Convertir documentos de Mongo a JSON seguro
+def serialize_todo(doc):
+    return {
+        "id": str(doc["_id"]),
+        "title": doc.get("title", ""),
+        "description": doc.get("description", ""),
+        "status": doc.get("status", "pendiente"),
+        "created_at": str(doc.get("created_at"))
+    }
 
 
 def get_collection():
@@ -12,30 +23,25 @@ def get_collection():
 
 
 # ---------------- LISTAR ----------------
-@router.get("/")
+@router.get("/", status_code=200)
 async def list_todos():
     coll = get_collection()
     cursor = coll.find().sort("created_at", -1)
 
-    docs = []
+    todos = []
     async for doc in cursor:
-        docs.append({
-            "id": str(doc["_id"]),
-            "title": doc.get("title"),
-            "description": doc.get("description"),
-            "status": doc.get("status", "pendiente"),
-            "created_at": doc.get("created_at")
-        })
-    return docs
+        todos.append(serialize_todo(doc))
+
+    return todos
 
 
 # ---------------- CREAR ----------------
-@router.post("/")
+@router.post("/", status_code=201)
 async def create_todo(payload: TodoIn):
     coll = get_collection()
 
     if not payload.title or payload.title.strip() == "":
-        raise HTTPException(400, "El título es obligatorio")
+        raise HTTPException(status_code=400, detail="El título es obligatorio")
 
     now = datetime.utcnow()
 
@@ -47,13 +53,13 @@ async def create_todo(payload: TodoIn):
     }
 
     res = await coll.insert_one(doc)
-    doc["id"] = str(res.inserted_id)
+    new_doc = await coll.find_one({"_id": res.inserted_id})
 
-    return doc
+    return serialize_todo(new_doc)
 
 
 # ---------------- ACTUALIZAR ----------------
-@router.put("/{id}")
+@router.put("/{id}", status_code=200)
 async def update_todo(id: str, payload: TodoUpdate):
     coll = get_collection()
 
@@ -74,35 +80,30 @@ async def update_todo(id: str, payload: TodoUpdate):
     if update == {}:
         raise HTTPException(400, "Nada para actualizar")
 
-    res = await coll.find_one_and_update(
+    await coll.update_one(
         {"_id": ObjectId(id)},
-        {"$set": update},
-        return_document=True
+        {"$set": update}
     )
 
-    if not res:
+    updated = await coll.find_one({"_id": ObjectId(id)})
+
+    if not updated:
         raise HTTPException(404, "Tarea no encontrada")
 
-    return {
-        "id": str(res["_id"]),
-        "title": res.get("title"),
-        "description": res.get("description"),
-        "status": res.get("status"),
-        "created_at": res.get("created_at")
-    }
+    return serialize_todo(updated)
 
 
 # ---------------- BORRAR ----------------
-@router.delete("/{id}")
+@router.delete("/{id}", status_code=200)
 async def delete_todo(id: str):
     coll = get_collection()
 
     if not ObjectId.is_valid(id):
         raise HTTPException(400, "ID inválido")
 
-    res = await coll.delete_one({"_id": ObjectId(id)})
+    result = await coll.delete_one({"_id": ObjectId(id)})
 
-    if res.deleted_count == 0:
+    if result.deleted_count == 0:
         raise HTTPException(404, "Tarea no encontrada")
 
     return {"message": "Eliminada correctamente"}
