@@ -16,7 +16,7 @@ function App() {
   }, []);
 
   const createTodo = async (title) => {
-    await apiPost("/api/todos", { title });
+    await apiPost("/api/todos/", { title });
     loadTodos();
   };
 

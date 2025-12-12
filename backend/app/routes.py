@@ -4,25 +4,20 @@ from app.models import TodoIn, TodoUpdate
 from datetime import datetime
 from bson import ObjectId
 
-router = APIRouter()
+router = APIRouter()  # NO AGREGAR prefijos aquí
 
 
 def get_collection():
-    """
-    Obtiene SIEMPRE la colección 'todos'.
-    Si la DB no está lista, get_db() lanzará el error correcto.
-    """
-    db = get_db()
-    return db["todos"]
+    return get_db()["todos"]
 
 
-@router.get("/", status_code=200)
+# ---------------- LISTAR ----------------
+@router.get("/")
 async def list_todos():
     coll = get_collection()
-
-    docs = []
     cursor = coll.find().sort("created_at", -1)
 
+    docs = []
     async for doc in cursor:
         docs.append({
             "id": str(doc["_id"]),
@@ -31,16 +26,16 @@ async def list_todos():
             "status": doc.get("status", "pendiente"),
             "created_at": doc.get("created_at")
         })
-
     return docs
 
 
-@router.post("/", status_code=201)
+# ---------------- CREAR ----------------
+@router.post("/")
 async def create_todo(payload: TodoIn):
     coll = get_collection()
 
     if not payload.title or payload.title.strip() == "":
-        raise HTTPException(status_code=400, detail="El título es obligatorio")
+        raise HTTPException(400, "El título es obligatorio")
 
     now = datetime.utcnow()
 
@@ -57,28 +52,27 @@ async def create_todo(payload: TodoIn):
     return doc
 
 
-@router.put("/{id}", status_code=200)
+# ---------------- ACTUALIZAR ----------------
+@router.put("/{id}")
 async def update_todo(id: str, payload: TodoUpdate):
     coll = get_collection()
 
     if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="ID inválido")
+        raise HTTPException(400, "ID inválido")
 
     update = {}
 
     if payload.title is not None:
         update["title"] = payload.title
-
     if payload.description is not None:
         update["description"] = payload.description
-
     if payload.status is not None:
         if payload.status not in ("pendiente", "completada"):
-            raise HTTPException(status_code=400, detail="Status inválido")
+            raise HTTPException(400, "Status inválido")
         update["status"] = payload.status
 
     if update == {}:
-        raise HTTPException(status_code=400, detail="Nada para actualizar")
+        raise HTTPException(400, "Nada para actualizar")
 
     res = await coll.find_one_and_update(
         {"_id": ObjectId(id)},
@@ -87,7 +81,7 @@ async def update_todo(id: str, payload: TodoUpdate):
     )
 
     if not res:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+        raise HTTPException(404, "Tarea no encontrada")
 
     return {
         "id": str(res["_id"]),
@@ -98,16 +92,17 @@ async def update_todo(id: str, payload: TodoUpdate):
     }
 
 
-@router.delete("/{id}", status_code=200)
+# ---------------- BORRAR ----------------
+@router.delete("/{id}")
 async def delete_todo(id: str):
     coll = get_collection()
 
     if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="ID inválido")
+        raise HTTPException(400, "ID inválido")
 
     res = await coll.delete_one({"_id": ObjectId(id)})
 
     if res.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+        raise HTTPException(404, "Tarea no encontrada")
 
     return {"message": "Eliminada correctamente"}
