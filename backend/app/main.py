@@ -5,9 +5,14 @@ from app.db import init_db
 
 app = FastAPI(title="Todo API - FastAPI")
 
+origins = [
+    "http://localhost:5173",
+    "https://proyecto-final-frontend.onrender.com",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # permitir TODO (temporalmente)
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -17,7 +22,6 @@ app.add_middleware(
 def root():
     return {"message": "Backend funcionando correctamente 🚀"}
 
-# Importante: este endpoint debe ser EXACTAMENTE así:
 app.include_router(todos_router, prefix="/api/todos")
 
 @app.on_event("startup")
