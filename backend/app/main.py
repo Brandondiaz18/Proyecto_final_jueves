@@ -6,11 +6,12 @@ from app.db import init_db
 
 app = FastAPI(title="Todo API - FastAPI")
 
-# CORS – Permitir tu frontend local y el futuro frontend en Render
+# ================================
+# 🔥 CORS CONFIG CORRECTA
+# ================================
 origins = [
-    "http://localhost:5173",
-    "https://proyecto-final-frontend.onrender.com",  # este será tu frontend después
-    "*",  # opcional, para desarrollo
+    "http://localhost:5173",                         # Frontend local
+    "https://proyecto-final-frontend.onrender.com",  # Tu frontend en Render
 ]
 
 app.add_middleware(
@@ -21,8 +22,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ================================
+# 🔥 ENDPOINT RAÍZ (obligatorio para evitar 404 en Render)
+# ================================
+@app.get("/")
+def root():
+    return {"message": "Backend funcionando correctamente 🚀"}
+
+
+# ================================
+# 🔥 RUTAS PRINCIPALES
+# ================================
 app.include_router(todos_router, prefix="/api/todos")
 
+
+# ================================
+# 🔥 INICIALIZAR BASE DE DATOS
+# ================================
 @app.on_event("startup")
 async def startup_event():
     await init_db()
