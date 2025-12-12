@@ -8,6 +8,10 @@ router = APIRouter()
 
 
 def get_collection():
+    """
+    Obtiene SIEMPRE la colección 'todos'.
+    Si la DB no está lista, get_db() lanzará el error correcto.
+    """
     db = get_db()
     return db["todos"]
 
@@ -27,6 +31,7 @@ async def list_todos():
             "status": doc.get("status", "pendiente"),
             "created_at": doc.get("created_at")
         })
+
     return docs
 
 
