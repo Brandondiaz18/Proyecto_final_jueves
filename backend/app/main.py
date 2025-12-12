@@ -6,14 +6,12 @@ from app.db import init_db
 
 app = FastAPI(title="Todo API - FastAPI")
 
-# ==============================
-# 🔹 CONFIGURACIÓN DE CORS
-# ==============================
-allowed = os.getenv("ALLOWED_ORIGIN", "*")
-if allowed == "":
-    allowed = "*"
-
-origins = [o.strip() for o in allowed.split(",")] if allowed != "*" else ["*"]
+# CORS – Permitir tu frontend local y el futuro frontend en Render
+origins = [
+    "http://localhost:5173",
+    "https://proyecto-final-frontend.onrender.com",  # este será tu frontend después
+    "*",  # opcional, para desarrollo
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,21 +21,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ==============================
-# 🔹 ENDPOINT PRINCIPAL (root)
-# ==============================
-@app.get("/")
-def home():
-    return {"message": "Backend funcionando correctamente 🚀"}
-
-# ==============================
-# 🔹 Rutas de TODOs
-# ==============================
 app.include_router(todos_router, prefix="/api/todos")
 
-# ==============================
-# 🔹 Evento de inicio
-# ==============================
 @app.on_event("startup")
 async def startup_event():
     await init_db()
