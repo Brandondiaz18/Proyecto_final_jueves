@@ -1,0 +1,14 @@
+{
+  "projects": [
+    {
+      "src": "frontend",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "frontend/**",
+        "excludeFiles": "backend/**"
+      }
+    }
+  ],
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist"
+}
