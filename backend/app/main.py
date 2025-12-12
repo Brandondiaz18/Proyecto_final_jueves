@@ -6,10 +6,13 @@ from app.db import init_db
 
 app = FastAPI(title="Todo API - FastAPI")
 
-# ORIGINS: variable ALLOWED_ORIGIN (coma-separada) o '*' por defecto (no recomendado en prod)
+# ==============================
+# 🔹 CONFIGURACIÓN DE CORS
+# ==============================
 allowed = os.getenv("ALLOWED_ORIGIN", "*")
 if allowed == "":
     allowed = "*"
+
 origins = [o.strip() for o in allowed.split(",")] if allowed != "*" else ["*"]
 
 app.add_middleware(
@@ -20,8 +23,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ==============================
+# 🔹 ENDPOINT PRINCIPAL (root)
+# ==============================
+@app.get("/")
+def home():
+    return {"message": "Backend funcionando correctamente 🚀"}
+
+# ==============================
+# 🔹 Rutas de TODOs
+# ==============================
 app.include_router(todos_router, prefix="/api/todos")
 
+# ==============================
+# 🔹 Evento de inicio
+# ==============================
 @app.on_event("startup")
 async def startup_event():
     await init_db()
